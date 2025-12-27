@@ -1,0 +1,61 @@
+package com.saltlux.workflow.direct.payload.messageable;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.saltlux.workflow.direct.payload.chatcompletion.Message;
+import com.saltlux.workflow.direct.payload.chatcompletion.ToolCall;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
+/**
+ * LLM 응답 메시지.
+ * <p>
+ * 기본 메시지 필드(role, content)에 추가로 reasoning과 toolCalls를 포함합니다.
+ * </p>
+ */
+@SuperBuilder(toBuilder = true)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@EqualsAndHashCode
+@ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.DEDUCTION, defaultImpl = ResponseMessage.class)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ResponseMessage.class),
+    @JsonSubTypes.Type(value = CitedMessage.class)
+})
+public class ResponseMessage implements IMessageable {
+
+  private String role;
+  private String content;
+
+  @JsonProperty("reasoning")
+  @JsonAlias({ "reasoning", "reasoning_content" })
+  private String reasoning;
+
+  @JsonProperty("tool_calls")
+  @JsonAlias({ "tool_calls", "toolCalls" })
+  private List<ToolCall> toolCalls;
+
+  @Override
+  public Message toMessage() {
+    return Message.builder()
+        .role(role)
+        .content(content)
+        .build();
+  }
+}
